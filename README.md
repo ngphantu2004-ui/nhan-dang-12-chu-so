@@ -1,76 +1,224 @@
-CCCD OCR – Thư viện Đóng gói Độc lập (Client-Side)Thư viện quét và nhận dạng số Căn cước công dân (CCCD) Việt Nam chạy 100% Client-Side trên trình duyệt web, không cần Backend API hay cơ sở dữ liệu.📌 Thông tin Cấu hình & Bản xuấtThông sốGiá trị cấu hìnhKích thước ROI200 × 38 pxPass ModeP2Tần suất bắt Frame200 msThuật toán Voting4/5 (Yêu cầu 4/5 phiếu trùng khớp trong cửa sổ trượt)Timeout10000 ms (10 giây)Thời điểm lưu2026-10-13T04:46:43+00:00SHA-256 (cccd-ocr.js)0f979d68d9f77245a42e46e44f345a1a9ea04422b58572b4611985104df80c8d📦 1. Cấu trúc Tập tin ZIPGói ZIP đã bao gồm đầy đủ tài nguyên OCROffline. Không cần cài đặt Laravel, Python, Node.js hay phụ thuộc CDN bên ngoài.Plaintext├── index.html                  # Mở để chạy thử camera (qua localhost hoặc HTTPS)
-├── demo.js                     # Giao diện demo đơn giản
-├── cccd-ocr.js                 # Lõi OCR: ROI, Voting, Feedback, Cấu hình chốt
-├── cccd-ocr-scanner.js         # Adapter camera độc lập, API tiện tích hợp
-├── HUONG_DAN.md                # Hướng dẫn chi tiết
-└── tesseract/                  # Bộ tài nguyên Tesseract offline
-    ├── tesseract.min.js        # Core library
-    ├── worker.min.js           # Web Worker
-    ├── eng.traineddata.gz      # Dữ liệu ngôn ngữ tiếng Anh
-    └── core/                   # Các file WebAssembly (*.wasm)
+C# CCCD OCR
+
+**Thư viện nhận dạng số căn cước công dân (CCCD) 12 chữ số trực tiếp trên trình duyệt.**
+
+Thư viện cung cấp lõi OCR và adapter camera độc lập để tích hợp vào website. Tài nguyên Tesseract được lưu cục bộ; 
+
+
+## Tính năng
+
+- **Nhận dạng 12 chữ số:** chỉ chấp nhận kết quả khớp định dạng `^\d{12}$`.
+- **ROI có cấu hình:** xử lý nội dung trong vùng quét được chỉ định.
+- **Ba chế độ tiền xử lý:** `P1`, `P2` và `BOTH`.
+- **Voting theo frame:** xác nhận dựa trên cửa sổ phiếu trượt, không đếm mỗi pass thành một phiếu riêng.
+- **Dễ tích hợp:** sử dụng `CccdOcrScanner` và các callback `onResult`, `onFrame`, `onError`.
+- **Ưu tiên quyền riêng tư:** cấu hình bản xuất tắt telemetry, lưu ảnh, lưu văn bản nhạy cảm và console logging mặc định.
+
+## Cấu hình của bản xuất
+
+| Tham số | Giá trị |
+|---|---|
+| ROI | `200 × 38 px` |
+| Pass | `P2` |
+| Chu kỳ bắt frame đã cấu hình | `200 ms` |
+| Voting | `4/5` |
+| Timeout | `10.000 ms` |
+| Thời điểm xuất (UTC) | `2026-10-13T04:46:43+00:00` |
+
+> Đây là **thông số cấu hình**, không phải cam kết mỗi lần nhận dạng hoàn tất trong 200 ms. Tác vụ OCR đang chạy không bị ngắt giữa chừng khi hết timeout.
+
+## Cấu trúc thư mục
+
+```text
+cccd-ocr/
+├── README.md                    # Tài liệu dành cho GitHub
+├── index.html                   # Trang demo camera
+├── demo.js                      # Logic giao diện demo
+├── cccd-ocr.js                  # Lõi OCR, ROI, Voting, feedback và cấu hình
+├── cccd-ocr-scanner.js          # Adapter camera cho website tích hợp
+├── HUONG_DAN.md                 # Hướng dẫn có trong gói xuất gốc
+└── tesseract/
+    ├── tesseract.min.js
+    ├── worker.min.js
+    ├── eng.traineddata.gz
+    └── core/
         ├── tesseract-core.wasm.js
         ├── tesseract-core-simd.wasm.js
         ├── tesseract-core-lstm.wasm.js
-        └── tesseract-core-simd-lstm.wasm.js
-Lưu ý Bảo mật & Bắt buộc:Không chứa file JSONL, ảnh thực tế, API key hay dữ liệu CCCD riêng tư.Mặc định bản xuất đã tắt consoleLogging và telemetry.🚀 2. Chạy thử nhanh (Quick Start)Giải nén file ZIP vào một thư mục, sau đó khởi chạy Web Server nội bộ (bắt buộc chạy trên localhost hoặc giao thức HTTPS theo chính sách bảo mật trình duyệt đối với Camera & Web Worker).Dùng Python 3:Bashpython -m http.server 8000
-Dùng PHP Built-in Server:Bashphp -S localhost:8000
-Mở trình duyệt truy cập: http://localhost:8000/index.html ➔ Nhấn Bắt đầu quét ➔ Cho phép truy cập Camera.⚠️ Cảnh báo: Trực tiếp mở file dạng file:///.../index.html sẽ không hoạt động do rào cản CORS và bảo mật Web Worker của trình duyệt.🛠️ 3. Hướng dẫn Tích hợp vào WebsiteSao chép thư mục tesseract/, file cccd-ocr.js và cccd-ocr-scanner.js vào thư mục static trên máy chủ của bạn (ví dụ: /assets/cccd-ocr/).Các đường dẫn của Tesseract được tự động tính toán theo vị trí của cccd-ocr.js, không bắt buộc hardcode tại gốc website.HTML<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Tích hợp Quét CCCD OCR</title>
-</head>
-<body>
+        ├── tesseract-core-simd-lstm.wasm.js
+        └── *.wasm                # Nếu có trong bản xuất
+```
 
-    <!-- Giao diện tùy chỉnh của ứng dụng -->
-    <div class="ocr-wrapper">
-        <video id="cccd-camera" autoplay playsinline></video>
-        <div id="cccd-guide"></div>
-        <button id="cccd-start">Quét CCCD</button>
-        
-        <input type="text" id="so-cccd" placeholder="Số CCCD sẽ tự điền..." readonly />
-    </div>
+Các tệp thực tế phải được lấy từ gói xuất. Hãy kiểm tra đầy đủ binary WebAssembly mà phiên bản Tesseract đang dùng cần tải trước khi phát hành repository.
 
-    <!-- Nhúng thư viện OCR -->
-    <script src="/assets/cccd-ocr/cccd-ocr.js"></script>
-    <script src="/assets/cccd-ocr/cccd-ocr-scanner.js"></script>
+## Chạy demo
 
-    <script>
-        const scanner = CccdOcrScanner.create({
-            video: '#cccd-camera',
-            guide: '#cccd-guide',
-            onResult: (result) => {
-                // Kiểm tra kết quả xác nhận và khớp đúng 12 chữ số
-                if (result.confirmed && /^\d{12}$/.test(result.cccd)) {
-                    document.querySelector('#so-cccd').value = result.cccd;
-                }
-            },
-            onFrame: (frame) => {
-                // Nhận thông số OCR/Confidence/Latency theo thời gian thực để render UI (chỉ lưu trong RAM)
-            },
-            onError: (error) => {
-                console.error('CCCD OCR Lỗi:', error.code || error.name);
-            }
-        });
+**1.** Giải nén toàn bộ gói vào một thư mục.
 
-        // Kích hoạt quét
-        document.querySelector('#cccd-start').addEventListener('click', () => {
-            void scanner.start();
-        });
+**2.** Phục vụ thư mục bằng một static server. Chọn **một** trong hai cách:
 
-        // Dùng scanner.stop() để tắt camera khi đóng Modal hoặc chuyển trang
-    </script>
-</body>
-</html>
-Cấu hình đường dẫn Tesseract tùy chỉnhNếu chuyển thư mục tesseract/ ra vị trí khác với cấu trúc mặc định, gọi hàm cấu hình trước khi khởi tạo:JavaScriptCccdOcr.configure({
-    tesseractScriptPath: '/custom-path/tesseract.min.js',
-    workerPath: '/custom-path/worker.min.js',
-    corePath: '/custom-path/core/',
-    langPath: '/custom-path/'
+```bash
+python -m http.server 8000
+```
+
+hoặc:
+
+```bash
+php -S localhost:8000
+```
+
+**3.** Truy cập [http://localhost:8000/index.html](http://localhost:8000/index.html), chọn **Bắt đầu quét** và cấp quyền camera.
+
+Camera và worker cần ngữ cảnh bảo mật phù hợp: sử dụng **`localhost` hoặc HTTPS**. Mở trực tiếp `file:///.../index.html` không được bảo đảm hoạt động. Khi triển khai thật, có thể dùng Apache, Nginx hoặc một static server khác.
+
+## Tích hợp vào website
+
+Sao chép **nguyên thư mục** `tesseract/` cùng `cccd-ocr.js`, `cccd-ocr-scanner.js` vào thư mục public, ví dụ:
+
+```text
+/assets/cccd-ocr/
+├── cccd-ocr.js
+├── cccd-ocr-scanner.js
+└── tesseract/
+```
+
+Các URL tài nguyên Tesseract được xác định theo vị trí của `cccd-ocr.js`, **không cố định ở `/tesseract/` tại gốc website**.
+
+### Ví dụ HTML / JavaScript
+
+```html
+<div class="camera-box" style="position:relative;width:360px;height:260px;overflow:hidden">
+  <video id="cccd-camera" autoplay muted playsinline
+         style="width:100%;height:100%;object-fit:cover"></video>
+  <div id="cccd-guide" data-cccd-roi
+       style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:2px solid #16a34a"></div>
+</div>
+
+<input id="so-cccd" type="text" aria-label="Số CCCD">
+<button id="cccd-start">Quét CCCD</button>
+
+<script src="/assets/cccd-ocr/cccd-ocr.js"></script>
+<script src="/assets/cccd-ocr/cccd-ocr-scanner.js"></script>
+<script>
+  const scanner = CccdOcrScanner.create({
+    video: '#cccd-camera',
+    guide: '#cccd-guide',
+
+    onResult: (result) => {
+      if (result.confirmed && /^\d{12}$/.test(result.cccd)) {
+        document.querySelector('#so-cccd').value = result.cccd;
+      }
+    },
+
+    onFrame: (frame) => {
+      // frame.rows: thông số OCR, confidence và latency cho UI riêng.
+    },
+
+    onError: (error) => {
+      console.error('CCCD OCR failed:', error.code || error.name);
+    }
+  });
+
+  document.querySelector('#cccd-start').addEventListener('click', () => {
+    void scanner.start();
+  });
+
+  // Gọi scanner.stop() khi đóng modal hoặc rời màn hình.
+</script>
+```
+
+Đây là ví dụ tích hợp tối thiểu. **Website nhận tự quyết định giao diện, vị trí điền CCCD, xử lý kết quả và chính sách dữ liệu.** Thư viện không phụ thuộc Controller hoặc Route của Laravel.
+
+### Các API được sử dụng
+
+| API / callback | Mục đích |
+|---|---|
+| `CccdOcrScanner.create(options)` | Tạo scanner với phần tử video, guide và callback. |
+| `scanner.start()` | Bắt đầu phiên quét camera. |
+| `scanner.stop()` | Dừng phiên quét. |
+| `onResult(result)` | Nhận kết quả xác nhận hoặc kết thúc; `result.cccd` rỗng khi timeout/hủy. |
+| `onFrame(frame)` | Đọc các thông số theo frame qua `frame.rows`. |
+| `onError(error)` | Xử lý lỗi trong ứng dụng tích hợp. |
+| `CccdOcr.onMetrics()` | Nhận thông số OCR từ lõi theo cơ chế callback của thư viện. |
+
+Nếu triển khai tài nguyên Tesseract ở thư mục khác, cấu hình đường dẫn trước khi khởi tạo OCR:
+
+```js
+CccdOcr.configure({
+  tesseractScriptPath,
+  workerPath,
+  corePath,
+  langPath
 });
-⚙️ 4. Cơ chế Xác nhận & Đọc Dữ liệu (Voting System)Chế độ Pass:P1 / P2: Đọc 1 lần theo thuật toán cấu hình cho mỗi frame.BOTH: Nhận dạng đồng thời cả P1 và P2 trên cùng ROI. Chỉ tạo 1 phiếu bầu khi cả hai phương pháp đều cho ra cùng chuỗi 12 chữ số.Cơ chế Voting:Thuật toán tính 1 phiếu bầu cho mỗi ROI/Frame.Cửa sổ trượt (sliding window) chứa cả các phiếu rỗng (không đọc được số).Chỉ trả về kết quả số CCCD hoàn chỉnh (result.confirmed = true) khi đạt ngưỡng quá bán đã thiết lập (Voting 4/5).requireBothPasses tự động chuẩn hóa: true khi dùng chế độ BOTH, false khi dùng P1 hoặc P2.Timeout & Tác vụ:onResult.cccd sẽ trả về rỗng nếu hết thời gian (10000 ms) hoặc người dùng hủy tác vụ.Tác vụ OCR đang chạy dở sẽ không bị ngắt đột ngột, do đó kết quả thực tế có thể trễ hơn thời điểm timeout một vài milisecond.🔒 5. Bảo mật & Quyền Quyền riêng tưCấu hình mặc định trong gói:JavaScripttelemetry.enabled = false;
-save_images = false;
-save_sensitive_text = false;
-consoleLogging = false;
-routes = [];
-Chỉ số hiệu năng: Các chỉ số về độ trễ và độ tin cậy (confidence) chỉ truyền qua callback onFrame hoặc CccdOcr.onMetrics() để phục vụ hiển thị UI. Thư viện không tự động truyền/gửi số CCCD hay hình ảnh về bất kỳ máy chủ nào.Trách nhiệm pháp lý: Số CCCD và ảnh chụp là dữ liệu cá nhân nhạy cảm. Đơn vị tích hợp tự chịu trách nhiệm về việc xin quyền truy cập camera, truyền tải, bảo mật và lưu trữ tuân thủ các quy định pháp luật hiện hành.📄 6. Tài nguyên Bên thứ ba & Giấy phépGói phân phối bao gồm các tập tin Binary và dữ liệu của Tesseract.js được sao chép từ dự án gốc. Khi tái phân phối, vui lòng giữ nguyên các thông báo bản quyền đi kèm.Tesseract.js GitHub RepositoryTesseract.js Core GitHub Repository
+```
+
+Các biến đường dẫn ở ví dụ trên cần được ứng dụng tích hợp cung cấp theo vị trí triển khai thực tế.
+
+## Quy tắc nhận dạng và Voting
+
+| Chế độ | Quy tắc tạo phiếu |
+|---|---|
+| `P1` | Đọc ROI/frame bằng P1. |
+| `P2` | Đọc ROI/frame bằng P2. |
+| `BOTH` | Đọc P1 và P2 trên cùng ROI/frame; chỉ tạo phiếu hợp lệ khi **hai pass trả cùng chuỗi 12 số**. |
+
+- Một ROI/frame tạo **tối đa một phiếu**, kể cả khi dùng `BOTH`.
+- Phiếu rỗng vẫn chiếm vị trí trong cửa sổ Voting trượt.
+- Bản xuất hiện tại yêu cầu **4 phiếu đồng thuận trong cửa sổ 5 phiếu**.
+- `requireBothPasses` được chuẩn hóa theo `passSelection`: `true` với `BOTH`, `false` với `P1` hoặc `P2`.
+- Kết quả chỉ được xác nhận khi đáp ứng điều kiện định dạng và Voting.
+- Khi timeout hoặc hủy, `onResult.cccd` rỗng. Một lần xử lý OCR đang chạy có thể kết thúc **sau** mốc timeout được cấu hình.
+
+## Quyền riêng tư và dữ liệu
+
+Cấu hình mặc định của **bản xuất**:
+
+```text
+telemetry.enabled    = false
+save_images          = false
+save_sensitive_text  = false
+routes               = rỗng
+consoleLogging       = false
+```
+
+Theo thiết kế được mô tả của bản xuất, ảnh và số CCCD được xử lý tại trình duyệt, **không tự động tải lên máy chủ**. Các chỉ số OCR, độ tin cậy và thời gian vẫn có thể được sử dụng trong bộ nhớ qua `onFrame` hoặc `CccdOcr.onMetrics()`.
+
+**Lưu ý:** Confidence của Tesseract **không phải** xác suất số CCCD được nhận dạng chính xác. Hệ thống tích hợp chịu trách nhiệm về quyền truy cập, truyền/lưu dữ liệu, bảo mật và sự đồng ý phù hợp khi xử lý dữ liệu cá nhân.
+
+## Kiểm tra tính toàn vẹn bản xuất
+
+SHA-256 được cung cấp cho file `cccd-ocr.js` tại thời điểm xuất:
+
+```text
+0f979d68d9f77245a42e46e44f345a1a9ea04422b58572b4611985104df80c8d
+```
+
+Kiểm tra bằng một trong hai cách:
+
+**Linux / macOS**
+
+```bash
+sha256sum cccd-ocr.js
+```
+
+**Windows PowerShell**
+
+```powershell
+Get-FileHash .\cccd-ocr.js -Algorithm SHA256
+```
+
+Hash này áp dụng cho **đúng tệp của bản xuất nêu trên**, không mặc định áp dụng cho các lần chỉnh sửa hoặc phát hành tiếp theo.
+
+## Phụ thuộc và giấy phép
+
+Gói xuất sao chép các tài nguyên OCR từ `public/tesseract/` của hệ thống nguồn. Các dự án liên quan:
+
+- [Tesseract.js](https://github.com/naptha/tesseract.js)
+- [tesseract.js-core](https://github.com/naptha/tesseract.js-core)
+
+Khi công bố hoặc phân phối lại repository, cần kiểm tra **phiên bản, giấy phép và thông báo ghi nhận bản quyền** của các tệp Tesseract, dữ liệu ngôn ngữ và các phụ thuộc có trong binary thực tế. Giấy phép của **mã thư viện CCCD OCR tự phát triển** cần được chủ sở hữu xác định riêng; không tự suy ra từ giấy phép Tesseract.
+
+---
+
+**Phạm vi thư viện:** lõi nhận dạng CCCD, ROI, Voting, feedback, cấu hình và adapter camera. Quản lý hồ sơ, lưu trữ CCCD và luồng nghiệp vụ của hệ thống sử dụng **không thuộc trách nhiệm của thư viện**.
+
