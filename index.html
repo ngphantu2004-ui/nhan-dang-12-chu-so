@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCCD OCR – Ví dụ tích hợp thư viện</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; background:#f6f8fb;color:#172538; }
+    main { max-width: 1000px; margin: 24px auto; padding: 0 14px 30px; }
+    h1 { margin:0 0 5px; font-size:22px; } .muted { color:#64748b; }
+    .layout { display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,.8fr);gap:14px;margin-top:14px; }
+    .panel { background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:15px;min-width:0; }
+    .stage { position:relative;background:#0b1220;border-radius:9px;overflow:hidden;height:350px; }
+    #camera { width:100%;height:100%;object-fit:cover;display:block; }
+    #roi { position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:2px solid #e2fce8;border-radius:6px;
+      box-shadow:0 0 0 2000px rgba(0,0,0,.17);pointer-events:none;z-index:1; }
+    .hint { position:absolute;top:12px;left:50%;transform:translateX(-50%);border-radius:6px;padding:5px 9px;
+      color:#fff;background:rgba(15,23,42,.8);white-space:nowrap;max-width:95%;font-size:12px;z-index:2; }
+    .actions { display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0; }
+    button { background:#155e75;color:#fff;border:0;border-radius:6px;padding:10px 17px;cursor:pointer;font-weight:650; }
+    button.secondary {background:#fff;color:#155e75;border:1px solid #155e75;} button:disabled{opacity:.45;cursor:not-allowed;}
+    #status{min-height:40px;padding:9px 11px;background:#eff6ff;border-radius:6px;margin-top:12px;}
+    #status[data-kind="error"]{background:#fff1f2;color:#a61b31;}
+    #status[data-kind="success"]{background:#effcf3;color:#166534;}
+    #number{font-size:25px;letter-spacing:1px;overflow-wrap:anywhere;font-weight:700;min-height:40px;color:#155e75;}
+    dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;}dl>div{padding:9px;border:1px solid #e2e8f0;border-radius:6px;min-width:0;}dt{color:#64748b;font-size:11px;}dd{margin:3px 0 0;font-size:16px;font-weight:700;}
+    .table-wrap{overflow-x:auto;margin-top:13px;}table{width:100%;border-collapse:collapse;min-width:710px;font-size:12px;}th,td{border-bottom:1px solid #e2e8f0;padding:9px;text-align:left;white-space:nowrap;}th{background:#f1f5f9;}
+    @media(max-width:680px){.layout{grid-template-columns:1fr}.stage{height:min(55vh,350px)}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Thư viện nhận dạng số CCCD</h1>
+  <p class="muted">Demo độc lập. Tài nguyên OCR đã có trong gói; kết quả xử lý ngay trên trình duyệt.</p>
+  <div class="layout">
+    <section class="panel">
+      <div class="stage">
+        <video id="camera" autoplay playsinline muted></video>
+        <div class="hint">Đưa 12 chữ số CCCD vào khung</div>
+        <div id="roi" data-cccd-roi></div>
+      </div>
+      <div class="actions">
+        <button id="start" type="button">Bắt đầu quét</button>
+        <button id="stop" type="button" class="secondary" disabled>Dừng</button>
+      </div>
+      <div id="status" role="status" aria-live="polite">Sẵn sàng. Cho phép camera khi trình duyệt hỏi.</div>
+    </section>
+    <section class="panel">
+      <div class="muted">Số CCCD đã xác nhận bằng Voting</div>
+      <div id="number">—</div>
+      <dl>
+        <div><dt>ROI</dt><dd id="roi-size">—</dd></div>
+        <div><dt>Pass</dt><dd id="pass-selection">—</dd></div>
+        <div><dt>Số frame</dt><dd id="frames">0</dd></div>
+        <div><dt>Số lượt OCR</dt><dd id="attempts">0</dd></div>
+        <div><dt>Voting</dt><dd id="votes">—</dd></div>
+        <div><dt>Thời gian</dt><dd id="elapsed">0.0 s</dd></div>
+        <div><dt>OCR trung bình</dt><dd id="avg-ocr">—</dd></div>
+        <div><dt>Frame → KQ TB</dt><dd id="avg-latency">—</dd></div>
+        <div><dt>Lượt nhận đủ 12 số</dt><dd id="valid-rate">—</dd></div>
+        <div><dt>Tốc độ OCR</dt><dd id="throughput">—</dd></div>
+      </dl>
+      <p class="muted">Số liệu ở đây chỉ hiển thị trong RAM. Không có API ghi hiệu năng, JSONL hoặc Laravel.</p>
+    </section>
+  </div>
+  <section class="panel" style="margin-top:14px">
+    <strong>Bảng hiệu năng các lượt OCR</strong>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Frame</th><th>Pass</th><th>Confidence</th><th>Preprocess</th><th>OCR</th><th>Frame → KQ</th><th>Đủ 12 số</th><th>Voting</th></tr></thead>
+      <tbody id="metrics-rows"></tbody>
+    </table></div>
+  </section>
+</main>
+<script src="cccd-ocr.js"></script>
+<script src="cccd-ocr-scanner.js"></script>
+<script src="demo.js" defer></script>
+</body>
+</html>
